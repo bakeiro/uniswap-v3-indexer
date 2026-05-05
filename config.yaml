@@ -12,7 +12,7 @@ contracts:
 
 networks:
   - id: 1 # Ethereum Mainnet
-    start_block: 0
+    start_block: 25029000
     contracts:
       - name: UniswapV3Pool
         address:
