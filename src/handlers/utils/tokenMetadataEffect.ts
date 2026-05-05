@@ -1,5 +1,11 @@
 import { experimental_createEffect, S } from "envio";
 import { createPublicClient, http, getContract, type PublicClient } from "viem";
+
+const POOL_ABI = [
+  { inputs: [], name: "token0", outputs: [{ type: "address" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "token1", outputs: [{ type: "address" }], stateMutability: "view", type: "function" },
+  { inputs: [], name: "fee", outputs: [{ type: "uint24" }], stateMutability: "view", type: "function" },
+] as const;
 import { ADDRESS_ZERO } from "./constants";
 import { getChainConfig } from "./chains";
 import * as dotenv from "dotenv";
@@ -82,6 +88,38 @@ function sanitizeString(str: string): string {
   if (!str) return "";
   return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim();
 }
+
+export const getPoolMetadataEffect = experimental_createEffect(
+  {
+    name: "getPoolMetadata",
+    input: { address: S.string, chainId: S.number },
+    output: { token0: S.string, token1: S.string, fee: S.number },
+    cache: true,
+  },
+  async ({ input, context }) => {
+    try {
+      if (!clients[input.chainId]) {
+        clients[input.chainId] = createPublicClient({
+          transport: http(getRpcUrl(input.chainId), { batch: true }),
+        });
+      }
+      const contract = getContract({
+        address: input.address as `0x${string}`,
+        abi: POOL_ABI,
+        client: clients[input.chainId],
+      });
+      const [token0, token1, fee] = await Promise.all([
+        contract.read.token0(),
+        contract.read.token1(),
+        contract.read.fee(),
+      ]);
+      return { token0: token0.toLowerCase(), token1: token1.toLowerCase(), fee: Number(fee) };
+    } catch (error) {
+      context.log.error(`Error fetching pool metadata for ${input.address}`, error as Error);
+      return { token0: ADDRESS_ZERO, token1: ADDRESS_ZERO, fee: 0 };
+    }
+  }
+);
 
 // Create the token metadata effect
 export const getTokenMetadataEffect = experimental_createEffect(
