@@ -27,18 +27,6 @@ let makeGeneratedConfig = () => {
     {
       let contracts = [
         {
-          InternalConfig.name: "UniswapV3Factory",
-          abi: Types.UniswapV3Factory.abi,
-          addresses: [
-            "0x1F98431c8aD98523631AE4a59f267346ea31F984"->Address.Evm.fromStringOrThrow
-,
-          ],
-          events: [
-            (Types.UniswapV3Factory.PoolCreated.register() :> Internal.eventConfig),
-          ],
-          startBlock: None,
-        },
-        {
           InternalConfig.name: "UniswapV3Pool",
           abi: Types.UniswapV3Pool.abi,
           addresses: [
@@ -52,11 +40,8 @@ let makeGeneratedConfig = () => {
 ,
           ],
           events: [
-            (Types.UniswapV3Pool.Initialize.register() :> Internal.eventConfig),
-            (Types.UniswapV3Pool.Collect.register() :> Internal.eventConfig),
-            (Types.UniswapV3Pool.Burn.register() :> Internal.eventConfig),
             (Types.UniswapV3Pool.Mint.register() :> Internal.eventConfig),
-            (Types.UniswapV3Pool.Swap.register() :> Internal.eventConfig),
+            (Types.UniswapV3Pool.Burn.register() :> Internal.eventConfig),
           ],
           startBlock: None,
         },
@@ -67,7 +52,7 @@ let makeGeneratedConfig = () => {
         startBlock: 0,
         id: 1,
         contracts,
-        sources: NetworkSources.evm(~chain, ~contracts=[{name: "UniswapV3Factory",events: [Types.UniswapV3Factory.PoolCreated.register()],abi: Types.UniswapV3Factory.abi}, {name: "UniswapV3Pool",events: [Types.UniswapV3Pool.Initialize.register(), Types.UniswapV3Pool.Collect.register(), Types.UniswapV3Pool.Burn.register(), Types.UniswapV3Pool.Mint.register(), Types.UniswapV3Pool.Swap.register()],abi: Types.UniswapV3Pool.abi}], ~hyperSync=Some("https://1.hypersync.xyz"), ~allEventSignatures=[Types.UniswapV3Factory.eventSignatures, Types.UniswapV3Pool.eventSignatures]->Belt.Array.concatMany, ~shouldUseHypersyncClientDecoder=true, ~rpcs=[], ~lowercaseAddresses=false)
+        sources: NetworkSources.evm(~chain, ~contracts=[{name: "UniswapV3Pool",events: [Types.UniswapV3Pool.Mint.register(), Types.UniswapV3Pool.Burn.register()],abi: Types.UniswapV3Pool.abi}], ~hyperSync=Some("https://1.hypersync.xyz"), ~allEventSignatures=[Types.UniswapV3Pool.eventSignatures]->Belt.Array.concatMany, ~shouldUseHypersyncClientDecoder=true, ~rpcs=[], ~lowercaseAddresses=false)
       }
     },
   ]
@@ -97,11 +82,6 @@ let registerAllHandlers = () => {
     ~preloadHandlers=configWithoutRegistrations.preloadHandlers,
   )
 
-  registerContractHandlers(
-    ~contractName="UniswapV3Factory",
-    ~handlerPathRelativeToRoot="src/EventHandlers.ts",
-    ~handlerPathRelativeToConfig="src/EventHandlers.ts",
-  )
   registerContractHandlers(
     ~contractName="UniswapV3Pool",
     ~handlerPathRelativeToRoot="src/EventHandlers.ts",

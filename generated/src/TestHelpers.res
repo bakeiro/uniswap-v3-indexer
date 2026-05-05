@@ -88,15 +88,9 @@ module EventFunctions = {
   module MockTransaction = {
     @genType
     type t = {
-      from?: option<Address.t>,
-      gasPrice?: option<bigint>,
-      hash?: string,
     }
 
     let toTransaction = (_mock: t) => {
-      from: _mock.from->Belt.Option.getWithDefault(None),
-      gasPrice: _mock.gasPrice->Belt.Option.getWithDefault(None),
-      hash: _mock.hash->Belt.Option.getWithDefault("foo"),
     }->(Utils.magic: Types.AggregatedTransaction.t => Internal.eventTransaction)
   }
 
@@ -148,207 +142,7 @@ module EventFunctions = {
 }
 
 
-module UniswapV3Factory = {
-  module PoolCreated = {
-    @genType
-    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Factory.PoolCreated.event> = EventFunctions.makeEventProcessor(
-      ~register=(Types.UniswapV3Factory.PoolCreated.register :> unit => Internal.eventConfig),
-    )
-
-    @genType
-    type createMockArgs = {
-      @as("token0")
-      token0?: Address.t,
-      @as("token1")
-      token1?: Address.t,
-      @as("fee")
-      fee?: bigint,
-      @as("tickSpacing")
-      tickSpacing?: bigint,
-      @as("pool")
-      pool?: Address.t,
-      mockEventData?: EventFunctions.mockEventData,
-    }
-
-    @genType
-    let createMockEvent = args => {
-      let {
-        ?token0,
-        ?token1,
-        ?fee,
-        ?tickSpacing,
-        ?pool,
-        ?mockEventData,
-      } = args
-
-      let params = 
-      {
-       token0: token0->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       token1: token1->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       fee: fee->Belt.Option.getWithDefault(0n),
-       tickSpacing: tickSpacing->Belt.Option.getWithDefault(0n),
-       pool: pool->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-      }
-->(Utils.magic: Types.UniswapV3Factory.PoolCreated.eventArgs => Internal.eventParams)
-
-      EventFunctions.makeEventMocker(
-        ~params,
-        ~mockEventData,
-        ~register=(Types.UniswapV3Factory.PoolCreated.register :> unit => Internal.eventConfig),
-      )->(Utils.magic: Internal.event => Types.UniswapV3Factory.PoolCreated.event)
-    }
-  }
-
-}
-
-
 module UniswapV3Pool = {
-  module Initialize = {
-    @genType
-    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Initialize.event> = EventFunctions.makeEventProcessor(
-      ~register=(Types.UniswapV3Pool.Initialize.register :> unit => Internal.eventConfig),
-    )
-
-    @genType
-    type createMockArgs = {
-      @as("sqrtPriceX96")
-      sqrtPriceX96?: bigint,
-      @as("tick")
-      tick?: bigint,
-      mockEventData?: EventFunctions.mockEventData,
-    }
-
-    @genType
-    let createMockEvent = args => {
-      let {
-        ?sqrtPriceX96,
-        ?tick,
-        ?mockEventData,
-      } = args
-
-      let params = 
-      {
-       sqrtPriceX96: sqrtPriceX96->Belt.Option.getWithDefault(0n),
-       tick: tick->Belt.Option.getWithDefault(0n),
-      }
-->(Utils.magic: Types.UniswapV3Pool.Initialize.eventArgs => Internal.eventParams)
-
-      EventFunctions.makeEventMocker(
-        ~params,
-        ~mockEventData,
-        ~register=(Types.UniswapV3Pool.Initialize.register :> unit => Internal.eventConfig),
-      )->(Utils.magic: Internal.event => Types.UniswapV3Pool.Initialize.event)
-    }
-  }
-
-  module Collect = {
-    @genType
-    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Collect.event> = EventFunctions.makeEventProcessor(
-      ~register=(Types.UniswapV3Pool.Collect.register :> unit => Internal.eventConfig),
-    )
-
-    @genType
-    type createMockArgs = {
-      @as("owner")
-      owner?: Address.t,
-      @as("recipient")
-      recipient?: Address.t,
-      @as("tickLower")
-      tickLower?: bigint,
-      @as("tickUpper")
-      tickUpper?: bigint,
-      @as("amount0")
-      amount0?: bigint,
-      @as("amount1")
-      amount1?: bigint,
-      mockEventData?: EventFunctions.mockEventData,
-    }
-
-    @genType
-    let createMockEvent = args => {
-      let {
-        ?owner,
-        ?recipient,
-        ?tickLower,
-        ?tickUpper,
-        ?amount0,
-        ?amount1,
-        ?mockEventData,
-      } = args
-
-      let params = 
-      {
-       owner: owner->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       recipient: recipient->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       tickLower: tickLower->Belt.Option.getWithDefault(0n),
-       tickUpper: tickUpper->Belt.Option.getWithDefault(0n),
-       amount0: amount0->Belt.Option.getWithDefault(0n),
-       amount1: amount1->Belt.Option.getWithDefault(0n),
-      }
-->(Utils.magic: Types.UniswapV3Pool.Collect.eventArgs => Internal.eventParams)
-
-      EventFunctions.makeEventMocker(
-        ~params,
-        ~mockEventData,
-        ~register=(Types.UniswapV3Pool.Collect.register :> unit => Internal.eventConfig),
-      )->(Utils.magic: Internal.event => Types.UniswapV3Pool.Collect.event)
-    }
-  }
-
-  module Burn = {
-    @genType
-    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Burn.event> = EventFunctions.makeEventProcessor(
-      ~register=(Types.UniswapV3Pool.Burn.register :> unit => Internal.eventConfig),
-    )
-
-    @genType
-    type createMockArgs = {
-      @as("owner")
-      owner?: Address.t,
-      @as("tickLower")
-      tickLower?: bigint,
-      @as("tickUpper")
-      tickUpper?: bigint,
-      @as("amount")
-      amount?: bigint,
-      @as("amount0")
-      amount0?: bigint,
-      @as("amount1")
-      amount1?: bigint,
-      mockEventData?: EventFunctions.mockEventData,
-    }
-
-    @genType
-    let createMockEvent = args => {
-      let {
-        ?owner,
-        ?tickLower,
-        ?tickUpper,
-        ?amount,
-        ?amount0,
-        ?amount1,
-        ?mockEventData,
-      } = args
-
-      let params = 
-      {
-       owner: owner->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       tickLower: tickLower->Belt.Option.getWithDefault(0n),
-       tickUpper: tickUpper->Belt.Option.getWithDefault(0n),
-       amount: amount->Belt.Option.getWithDefault(0n),
-       amount0: amount0->Belt.Option.getWithDefault(0n),
-       amount1: amount1->Belt.Option.getWithDefault(0n),
-      }
-->(Utils.magic: Types.UniswapV3Pool.Burn.eventArgs => Internal.eventParams)
-
-      EventFunctions.makeEventMocker(
-        ~params,
-        ~mockEventData,
-        ~register=(Types.UniswapV3Pool.Burn.register :> unit => Internal.eventConfig),
-      )->(Utils.magic: Internal.event => Types.UniswapV3Pool.Burn.event)
-    }
-  }
-
   module Mint = {
     @genType
     let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Mint.event> = EventFunctions.makeEventProcessor(
@@ -407,61 +201,57 @@ module UniswapV3Pool = {
     }
   }
 
-  module Swap = {
+  module Burn = {
     @genType
-    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Swap.event> = EventFunctions.makeEventProcessor(
-      ~register=(Types.UniswapV3Pool.Swap.register :> unit => Internal.eventConfig),
+    let processEvent: EventFunctions.eventProcessor<Types.UniswapV3Pool.Burn.event> = EventFunctions.makeEventProcessor(
+      ~register=(Types.UniswapV3Pool.Burn.register :> unit => Internal.eventConfig),
     )
 
     @genType
     type createMockArgs = {
-      @as("sender")
-      sender?: Address.t,
-      @as("recipient")
-      recipient?: Address.t,
+      @as("owner")
+      owner?: Address.t,
+      @as("tickLower")
+      tickLower?: bigint,
+      @as("tickUpper")
+      tickUpper?: bigint,
+      @as("amount")
+      amount?: bigint,
       @as("amount0")
       amount0?: bigint,
       @as("amount1")
       amount1?: bigint,
-      @as("sqrtPriceX96")
-      sqrtPriceX96?: bigint,
-      @as("liquidity")
-      liquidity?: bigint,
-      @as("tick")
-      tick?: bigint,
       mockEventData?: EventFunctions.mockEventData,
     }
 
     @genType
     let createMockEvent = args => {
       let {
-        ?sender,
-        ?recipient,
+        ?owner,
+        ?tickLower,
+        ?tickUpper,
+        ?amount,
         ?amount0,
         ?amount1,
-        ?sqrtPriceX96,
-        ?liquidity,
-        ?tick,
         ?mockEventData,
       } = args
 
       let params = 
       {
-       sender: sender->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
-       recipient: recipient->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
+       owner: owner->Belt.Option.getWithDefault(TestHelpers_MockAddresses.defaultAddress),
+       tickLower: tickLower->Belt.Option.getWithDefault(0n),
+       tickUpper: tickUpper->Belt.Option.getWithDefault(0n),
+       amount: amount->Belt.Option.getWithDefault(0n),
        amount0: amount0->Belt.Option.getWithDefault(0n),
        amount1: amount1->Belt.Option.getWithDefault(0n),
-       sqrtPriceX96: sqrtPriceX96->Belt.Option.getWithDefault(0n),
-       liquidity: liquidity->Belt.Option.getWithDefault(0n),
-       tick: tick->Belt.Option.getWithDefault(0n),
       }
-->(Utils.magic: Types.UniswapV3Pool.Swap.eventArgs => Internal.eventParams)
+->(Utils.magic: Types.UniswapV3Pool.Burn.eventArgs => Internal.eventParams)
 
       EventFunctions.makeEventMocker(
         ~params,
         ~mockEventData,
-        ~register=(Types.UniswapV3Pool.Swap.register :> unit => Internal.eventConfig),
-      )->(Utils.magic: Internal.event => Types.UniswapV3Pool.Swap.event)
+        ~register=(Types.UniswapV3Pool.Burn.register :> unit => Internal.eventConfig),
+      )->(Utils.magic: Internal.event => Types.UniswapV3Pool.Burn.event)
     }
   }
 

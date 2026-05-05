@@ -3,22 +3,9 @@
 /* eslint-disable */
 /* tslint:disable */
 
-export type ContractType_t = "UniswapV3Factory" | "UniswapV3Pool";
+export type ContractType_t = "UniswapV3Pool";
 
 export type EntityType_t = 
-    "Bundle"
-  | "Burn"
-  | "Collect"
-  | "Factory"
-  | "Mint"
-  | "Pool"
-  | "PoolDayData"
-  | "PoolHourData"
-  | "Swap"
+    "Pool"
   | "Tick"
-  | "Token"
-  | "TokenDayData"
-  | "TokenHourData"
-  | "Transaction"
-  | "UniswapDayData"
   | "dynamic_contract_registry";

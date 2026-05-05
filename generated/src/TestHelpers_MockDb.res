@@ -69,21 +69,8 @@ type rec t = {
 // Each user defined entity will be in this record with all the store or "mockdb" operators
 @genType
 and entities = {
-    @as("Bundle") bundle: entityStoreOperations<Entities.Bundle.t>,
-    @as("Burn") burn: entityStoreOperations<Entities.Burn.t>,
-    @as("Collect") collect: entityStoreOperations<Entities.Collect.t>,
-    @as("Factory") factory: entityStoreOperations<Entities.Factory.t>,
-    @as("Mint") mint: entityStoreOperations<Entities.Mint.t>,
     @as("Pool") pool: entityStoreOperations<Entities.Pool.t>,
-    @as("PoolDayData") poolDayData: entityStoreOperations<Entities.PoolDayData.t>,
-    @as("PoolHourData") poolHourData: entityStoreOperations<Entities.PoolHourData.t>,
-    @as("Swap") swap: entityStoreOperations<Entities.Swap.t>,
     @as("Tick") tick: entityStoreOperations<Entities.Tick.t>,
-    @as("Token") token: entityStoreOperations<Entities.Token.t>,
-    @as("TokenDayData") tokenDayData: entityStoreOperations<Entities.TokenDayData.t>,
-    @as("TokenHourData") tokenHourData: entityStoreOperations<Entities.TokenHourData.t>,
-    @as("Transaction") transaction: entityStoreOperations<Entities.Transaction.t>,
-    @as("UniswapDayData") uniswapDayData: entityStoreOperations<Entities.UniswapDayData.t>,
   }
 // User defined entities always have a string for an id which is used as the
 // key for entity stores
@@ -298,76 +285,6 @@ let rec makeWithInMemoryStore: InMemoryStore.t => t = (inMemoryStore: InMemorySt
   )
 
   let entities = {
-      bundle: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Bundle)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Bundle.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      burn: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Burn)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Burn.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      collect: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Collect)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Collect.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      factory: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Factory)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Factory.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      mint: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Mint)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Mint.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
       pool: {
         makeStoreOperatorEntity(
           ~inMemoryStore,
@@ -382,48 +299,6 @@ let rec makeWithInMemoryStore: InMemoryStore.t => t = (inMemoryStore: InMemorySt
           ~getKey=({id}) => id,
         )
       },
-      poolDayData: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.PoolDayData)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.PoolDayData.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      poolHourData: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.PoolHourData)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.PoolHourData.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      swap: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Swap)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Swap.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
       tick: {
         makeStoreOperatorEntity(
           ~inMemoryStore,
@@ -433,76 +308,6 @@ let rec makeWithInMemoryStore: InMemoryStore.t => t = (inMemoryStore: InMemorySt
           )->(
             Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
               Entities.Tick.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      token: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Token)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Token.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      tokenDayData: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.TokenDayData)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.TokenDayData.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      tokenHourData: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.TokenHourData)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.TokenHourData.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      transaction: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.Transaction)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.Transaction.t,
-            >
-          ),
-          ~getKey=({id}) => id,
-        )
-      },
-      uniswapDayData: {
-        makeStoreOperatorEntity(
-          ~inMemoryStore,
-          ~makeMockDb=makeWithInMemoryStore,
-          ~getStore=db => db->InMemoryStore.getInMemTable(
-            ~entityConfig=module(Entities.UniswapDayData)->Entities.entityModToInternal,
-          )->(
-            Utils.magic: InMemoryTable.Entity.t<Internal.entity> => InMemoryTable.Entity.t<
-              Entities.UniswapDayData.t,
             >
           ),
           ~getKey=({id}) => id,

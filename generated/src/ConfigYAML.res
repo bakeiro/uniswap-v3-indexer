@@ -34,19 +34,6 @@ let publicConfig = ChainMap.fromArrayUnsafe([
   {
     let contracts = Js.Dict.fromArray([
       (
-        "UniswapV3Factory",
-        {
-          name: "UniswapV3Factory",
-          abi: Types.UniswapV3Factory.abi,
-          addresses: [
-            "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-          ],
-          events: [
-            Types.UniswapV3Factory.PoolCreated.name,
-          ],
-        }
-      ),
-      (
         "UniswapV3Pool",
         {
           name: "UniswapV3Pool",
@@ -58,11 +45,8 @@ let publicConfig = ChainMap.fromArrayUnsafe([
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35",
           ],
           events: [
-            Types.UniswapV3Pool.Initialize.name,
-            Types.UniswapV3Pool.Collect.name,
-            Types.UniswapV3Pool.Burn.name,
             Types.UniswapV3Pool.Mint.name,
-            Types.UniswapV3Pool.Swap.name,
+            Types.UniswapV3Pool.Burn.name,
           ],
         }
       ),
