@@ -1,13 +1,13 @@
 import { UniswapV3Pool, BigDecimal } from "generated";
 import { ZERO_BI, ONE_BD } from './utils/constants';
 import { fastExponentiation, safeDiv } from './utils/index';
+import { ensurePoolInitialized } from './utils/snapshot';
 
 UniswapV3Pool.Mint.handler(async ({ event, context }) => {
-    const poolId = `${event.chainId}-${event.srcAddress.toLowerCase()}`;
+    const poolAddress = event.srcAddress.toLowerCase();
+    const poolId = `${event.chainId}-${poolAddress}`;
 
-    if (!await context.Pool.get(poolId)) {
-        context.Pool.set({ id: poolId });
-    }
+    await ensurePoolInitialized(poolId, poolAddress, context);
 
     const lowerTickId = `${poolId}#${event.params.tickLower}`;
     const upperTickId = `${poolId}#${event.params.tickUpper}`;

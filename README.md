@@ -1,113 +1,217 @@
-# Uniswap V3 Indexer
+# Uniswap V3 Tick Indexer
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Chat-7289da?logo=discord&logoColor=white)](https://discord.com/invite/envio)
+Indexer minimalista para trackear el estado de los ticks de pools específicas de Uniswap V3, usando [Envio HyperIndex](https://docs.envio.dev).
 
-A multichain Uniswap V3 subgraph migration built with [Envio HyperIndex](https://docs.envio.dev/docs/HyperIndex/overview). Migrated from The Graph subgraph to HyperIndex for faster data access and multichain support.
+Solo procesa eventos `Mint` y `Burn` — los únicos que modifican `liquidityGross` y `liquidityNet` de los ticks. Los eventos `Swap` no se indexan porque no alteran el estado de los ticks.
 
-## What's Indexed
+---
 
-The GraphQL API exposes pool statistics, swap history, liquidity positions, fee data, and token metadata across all active chains. You can use this to power analytics dashboards, trading interfaces, liquidity trackers, and cross-chain Uniswap V3 data aggregations.
+## Cómo funciona
 
-## Events Indexed
+Usa un patrón **snapshot + replay**:
 
-From `UniswapV3Factory` and `UniswapV3Pool` contracts:
+1. Tu script RPC lee el estado actual de los ticks en un bloque concreto N y lo guarda en `snapshot.json`
+2. Envio arranca desde el bloque N y carga ese snapshot como estado inicial
+3. A partir de ahí, cada `Mint` y `Burn` actualiza los ticks incrementalmente
 
-- `PoolCreated` - new pool deployments with token pair and fee tier
-- `Initialize` - pool initialization with price and tick
-- `Mint` - liquidity additions
-- `Burn` - liquidity removals
-- `Collect` - fee collection
-- `Swap` - all swaps with amounts, price, and liquidity
+Esto evita indexar toda la historia desde el bloque 0, lo que para pools activas supera fácilmente el límite de eventos del plan gratuito de Envio.
 
-## Active Chains
+---
 
-Ethereum Mainnet, Optimism
+## Pools trackeadas
 
-> Additional chains (Arbitrum, Base, Polygon, BSC, Avalanche, Blast, Unichain) are available in the config and can be enabled.
+Definidas en `config.yaml` bajo `networks > contracts > address`. Solo se indexan eventos de esas addresses — HyperSync filtra a nivel de red.
 
-## Notes on Migration from Subgraph
+Para añadir o quitar pools, edita `config.yaml`:
 
-- All entity IDs that use EVM addresses are stored in lowercase
-- IDs are prefixed with the chain ID: `<chainId>-<address>` to avoid cross-chain clashes
-- Unlike the original subgraph, tokens do not have a `totalSupply` field (cannot be updated reliably via events)
-- GraphQL query structure differs from The Graph. See the [query conversion guide](https://docs.envio.dev/docs/HyperIndex/query-conversion)
+```yaml
+networks:
+  - id: 1 # Ethereum Mainnet
+    start_block: <bloque del snapshot>
+    contracts:
+      - name: UniswapV3Pool
+        address:
+          - 0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8
+          - 0xe6ff8b9a37b0fab776134636d9981aa778c4e718
+          - 0x56534741cd8b152df6d48adf7ac51f75169a83b2
+          - 0x99ac8ca7087fa4a2a1fb6357269965a2014abc35
+```
 
-## Prerequisites
+---
 
-- [Node.js](https://nodejs.org/en/download/current) v22 or newer
-- [pnpm](https://pnpm.io/installation) v8 or newer
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+## Snapshot
 
-## Quick Start
+### Dónde va
+
+El archivo `snapshot.json` va en la **raíz del proyecto** (al mismo nivel que `package.json`).
+
+### Cómo generarlo
+
+Usa tu script RPC existente apuntando a un bloque concreto N (por ejemplo usando un fork de Alchemy). El script debe leer los ticks inicializados de cada pool via `TickBitmap` + `pool.ticks(tickIndex)`.
+
+### Formato
+
+```json
+[
+  {
+    "address": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
+    "ticks": [
+      {
+        "tickIdx": "-887272",
+        "liquidityGross": "1000000000000000000",
+        "liquidityNet": "500000000000000000",
+        "price0": "0.000000000000000001",
+        "price1": "1000000000000000000"
+      },
+      {
+        "tickIdx": "0",
+        "liquidityGross": "2000000000000000000",
+        "liquidityNet": "-500000000000000000",
+        "price0": "1.0",
+        "price1": "1.0"
+      }
+    ]
+  },
+  {
+    "address": "0xe6ff8b9a37b0fab776134636d9981aa778c4e718",
+    "ticks": []
+  }
+]
+```
+
+Notas del formato:
+- `address` en minúsculas
+- `tickIdx`, `liquidityGross`, `liquidityNet` como strings (son bigints)
+- `price0`, `price1` como strings decimales (`1.0001^tickIdx` y su inverso)
+- El array incluye **todos** los ticks inicializados de la pool en el bloque N
+
+### Qué pasa si no hay snapshot
+
+Si `snapshot.json` no existe o una pool no aparece en él, el indexer arranca con ticks vacíos y los va construyendo desde `start_block`. Los datos serán correctos solo para el periodo indexado, no para el histórico anterior.
+
+---
+
+## Configurar el bloque de inicio
+
+En `config.yaml`, `start_block` debe ser el **mismo bloque N** donde tomaste el snapshot:
+
+```yaml
+networks:
+  - id: 1
+    start_block: 21500000  # mismo bloque que el snapshot
+```
+
+Si `start_block` es posterior al snapshot → ticks incorrectos (pierdes eventos entre snapshot y start_block).
+Si `start_block` es anterior al snapshot → ticks incorrectos (aplicas eventos ya reflejados en el snapshot).
+
+---
+
+## Entidades
+
+### `Pool`
+Solo contiene el `id` (`{chainId}-{poolAddress}`). Es un contenedor para agrupar ticks.
+
+### `Tick`
+```graphql
+type Tick {
+  id: ID!                        # {chainId}-{poolAddress}#{tickIdx}
+  pool: Pool! @index
+  poolAddress: String @index     # igual que pool.id
+  tickIdx: BigInt! @index
+  liquidityGross: BigInt!        # liquidez total que referencia este tick
+  liquidityNet: BigInt!          # cambio de liquidez al cruzar el tick
+  price0: BigDecimal!            # precio de token0 en este tick (1.0001^tickIdx)
+  price1: BigDecimal!            # precio de token1 en este tick (inverso de price0)
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+}
+```
+
+---
+
+## Arrancar
+
+### Requisitos
+- Node.js v22+
+- pnpm v8+
+- Docker Desktop
+
+### Primera vez (o tras cambiar schema/config)
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Run locally (starts indexer + GraphQL API at http://localhost:8080)
+pnpm codegen
+docker compose -f generated/docker-compose.yaml down -v   # limpia DB anterior
 pnpm dev
 ```
 
-The GraphQL Playground is available at [http://localhost:8080](http://localhost:8080). Local password: `testing`.
-
-## Regenerate Files
+### Arranques normales (sin cambios de schema)
 
 ```bash
-pnpm codegen
+pnpm dev
 ```
 
-## Sample Queries
+### Subir a Envio Cloud
+
+```bash
+pnpm start
+```
+
+---
+
+## Consultar los ticks
+
+El playground GraphQL está en `http://localhost:8080` (local, contraseña: `testing`).
 
 ```graphql
-# Get ETH price
+# Todos los ticks de una pool ordenados por tick
 {
-  Bundle {
-    ethPriceUSD
-    id
+  Tick(
+    where: { poolAddress: { _eq: "1-0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8" } }
+    order_by: { tickIdx: asc }
+  ) {
+    tickIdx
+    liquidityGross
+    liquidityNet
+    price0
+    price1
   }
 }
 ```
 
 ```graphql
-# Get pools with liquidity
+# Un tick específico
 {
-  Pool(limit: 10, order_by: {totalValueLockedUSD: desc}) {
-    id
-    liquidity
-    token0 { symbol decimals }
-    token1 { symbol decimals }
-    totalValueLockedUSD
-    volumeUSD
+  Tick(
+    where: {
+      poolAddress: { _eq: "1-0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8" }
+      tickIdx: { _eq: "0" }
+    }
+  ) {
+    tickIdx
+    liquidityGross
+    liquidityNet
   }
 }
 ```
 
-```graphql
-# Get whitelisted tokens
-{
-  Token(where: {isWhitelisted: {_eq: true}}) {
-    id
-    name
-    symbol
-    decimals
-    poolCount
-  }
-}
+El prefijo `1-` en el `poolAddress` es el `chainId` (1 = Ethereum Mainnet).
+
+---
+
+## Estructura del proyecto
+
 ```
-
-## Built With
-
-- [Envio HyperIndex](https://docs.envio.dev/docs/HyperIndex/overview) - multichain indexing framework
-- [HyperSync](https://docs.envio.dev/docs/HyperSync/overview) - high-performance blockchain data retrieval
-- Migrated from the [Uniswap V3 Subgraph](https://github.com/Uniswap/v3-subgraph)
-
-## Documentation
-
-- [HyperIndex Docs](https://docs.envio.dev/docs/HyperIndex/overview)
-- [Subgraph to HyperIndex query conversion](https://docs.envio.dev/docs/HyperIndex/query-conversion)
-- [Migrate from The Graph to Envio](https://docs.envio.dev/docs/HyperIndex/migration-guide)
-
-## Support
-
-- [Discord community](https://discord.com/invite/envio)
-- [Envio Docs](https://docs.envio.dev)
+├── config.yaml                  # pools, red, start_block
+├── schema.graphql               # entidades Pool y Tick
+├── snapshot.json                # snapshot de ticks (generado externamente)
+├── src/
+│   ├── EventHandlers.ts         # entry point, registra handlers
+│   └── handlers/
+│       ├── mint.ts              # crea/actualiza ticks en Mint
+│       ├── burn.ts              # actualiza ticks en Burn
+│       └── utils/
+│           ├── constants.ts     # ZERO_BI, ZERO_BD, etc.
+│           ├── index.ts         # fastExponentiation, safeDiv
+│           └── snapshot.ts      # carga snapshot.json e inicializa pools
+```
