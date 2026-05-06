@@ -49,7 +49,7 @@ let makeGeneratedConfig = () => {
       let chain = ChainMap.Chain.makeUnsafe(~chainId=1)
       {
         InternalConfig.maxReorgDepth: 200,
-        startBlock: 0,
+        startBlock: 25029000,
         id: 1,
         contracts,
         sources: NetworkSources.evm(~chain, ~contracts=[{name: "UniswapV3Pool",events: [Types.UniswapV3Pool.Mint.register(), Types.UniswapV3Pool.Burn.register()],abi: Types.UniswapV3Pool.abi}], ~hyperSync=Some("https://1.hypersync.xyz"), ~allEventSignatures=[Types.UniswapV3Pool.eventSignatures]->Belt.Array.concatMany, ~shouldUseHypersyncClientDecoder=true, ~rpcs=[], ~lowercaseAddresses=false)

@@ -12,47 +12,44 @@ interface TickSnapshot {
 }
 
 interface PoolSnapshot {
+    chainId: number;
     address: string;
     ticks: TickSnapshot[];
 }
 
-// Load once at module level
-const SNAPSHOT_PATH = path.resolve(__dirname, "../../../../snapshot.json");
-let snapshotByAddress: Record<string, PoolSnapshot> | null = null;
+const SNAPSHOT_PATH = path.resolve(__dirname, "../../../snapshot.json");
+let snapshotByPoolId: Record<string, PoolSnapshot> | null = null;
 
 function loadSnapshot(): Record<string, PoolSnapshot> {
-    if (snapshotByAddress) return snapshotByAddress;
+    if (snapshotByPoolId) return snapshotByPoolId;
     if (!fs.existsSync(SNAPSHOT_PATH)) {
-        snapshotByAddress = {};
-        return snapshotByAddress;
+        snapshotByPoolId = {};
+        return snapshotByPoolId;
     }
     const pools: PoolSnapshot[] = JSON.parse(fs.readFileSync(SNAPSHOT_PATH, "utf-8"));
-    snapshotByAddress = Object.fromEntries(
-        pools.map(p => [p.address.toLowerCase(), p])
+    snapshotByPoolId = Object.fromEntries(
+        pools.map(p => [`${p.chainId}-${p.address.toLowerCase()}`, p])
     );
-    return snapshotByAddress;
+    return snapshotByPoolId;
 }
 
 export async function ensurePoolInitialized(
     poolId: string,
-    poolAddress: string,
     context: handlerContext
 ): Promise<void> {
     if (await context.Pool.get(poolId)) return;
 
     context.Pool.set({ id: poolId });
 
-    const snapshot = loadSnapshot();
-    const poolData = snapshot[poolAddress.toLowerCase()];
+    const poolData = loadSnapshot()[poolId];
     if (!poolData) return;
 
     for (const tick of poolData.ticks) {
-        const tickIdx = BigInt(tick.tickIdx);
         context.Tick.set({
             id: `${poolId}#${tick.tickIdx}`,
             pool_id: poolId,
             poolAddress: poolId,
-            tickIdx,
+            tickIdx: BigInt(tick.tickIdx),
             liquidityGross: BigInt(tick.liquidityGross),
             liquidityNet: BigInt(tick.liquidityNet),
             price0: new BigDecimal(tick.price0),

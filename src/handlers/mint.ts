@@ -4,10 +4,9 @@ import { fastExponentiation, safeDiv } from './utils/index';
 import { ensurePoolInitialized } from './utils/snapshot';
 
 UniswapV3Pool.Mint.handler(async ({ event, context }) => {
-    const poolAddress = event.srcAddress.toLowerCase();
-    const poolId = `${event.chainId}-${poolAddress}`;
+    const poolId = `${event.chainId}-${event.srcAddress.toLowerCase()}`;
 
-    await ensurePoolInitialized(poolId, poolAddress, context);
+    await ensurePoolInitialized(poolId, context);
 
     const lowerTickId = `${poolId}#${event.params.tickLower}`;
     const upperTickId = `${poolId}#${event.params.tickUpper}`;

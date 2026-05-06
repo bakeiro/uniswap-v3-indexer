@@ -22,20 +22,27 @@ Esto evita indexar toda la historia desde el bloque 0, lo que para pools activas
 
 Definidas en `config.yaml` bajo `networks > contracts > address`. Solo se indexan eventos de esas addresses — HyperSync filtra a nivel de red.
 
-Para añadir o quitar pools, edita `config.yaml`:
+Para añadir o quitar pools, edita `config.yaml`. Puedes mezclar pools de distintas cadenas:
 
 ```yaml
 networks:
   - id: 1 # Ethereum Mainnet
-    start_block: <bloque del snapshot>
+    start_block: 25029000
     contracts:
       - name: UniswapV3Pool
         address:
           - 0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8
           - 0xe6ff8b9a37b0fab776134636d9981aa778c4e718
-          - 0x56534741cd8b152df6d48adf7ac51f75169a83b2
-          - 0x99ac8ca7087fa4a2a1fb6357269965a2014abc35
+
+  - id: 10 # Optimism
+    start_block: 130000000
+    contracts:
+      - name: UniswapV3Pool
+        address:
+          - 0xabc1234567890000000000000000000000000001
 ```
+
+Cada red puede tener su propio `start_block` — toma el snapshot de cada cadena en el bloque correspondiente.
 
 ---
 
@@ -54,6 +61,7 @@ Usa tu script RPC existente apuntando a un bloque concreto N (por ejemplo usando
 ```json
 [
   {
+    "chainId": 1,
     "address": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
     "ticks": [
       {
@@ -73,17 +81,20 @@ Usa tu script RPC existente apuntando a un bloque concreto N (por ejemplo usando
     ]
   },
   {
-    "address": "0xe6ff8b9a37b0fab776134636d9981aa778c4e718",
+    "chainId": 10,
+    "address": "0xabc1234567890000000000000000000000000001",
     "ticks": []
   }
 ]
 ```
 
 Notas del formato:
+- `chainId` es el ID numérico de la red (1 = Mainnet, 10 = Optimism, 42161 = Arbitrum...)
 - `address` en minúsculas
 - `tickIdx`, `liquidityGross`, `liquidityNet` como strings (son bigints)
 - `price0`, `price1` como strings decimales (`1.0001^tickIdx` y su inverso)
 - El array incluye **todos** los ticks inicializados de la pool en el bloque N
+- Cada entrada del array es una pool de una cadena concreta — puedes mezclar cadenas en el mismo archivo
 
 ### Qué pasa si no hay snapshot
 
